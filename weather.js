@@ -26,8 +26,8 @@ document.addEventListener("DOMContentLoaded", function () {
             windSpeedLoading.style.display = "block";
             weatherLoading.style.display = "block";
     
-            const apiKey = '7a5b10a6fa84a55e583efbbd651e63b4'; // Use your actual Weatherstack API key
-            const url = `https://api.weatherstack.com/current?access_key=${apiKey}&query=${location}&units=m`;
+            const apiKey = '143dbe2f90a8425b3cda5c24fb043a1b';  // Replace with your OpenWeather API Key
+            const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`;
             let response = await fetch(url);
             let data = await response.json();
     
