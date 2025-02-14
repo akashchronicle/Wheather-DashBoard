@@ -1,4 +1,4 @@
-//getting all the elments
+// Getting all the elements
 const searchInput = document.getElementById("search");
 const searchForm = document.getElementById("search-form");
 const temperatureDisplay = document.getElementById("temperature");
@@ -14,59 +14,92 @@ const weatherImage = document.getElementById("weather-image");
 
 document.addEventListener("DOMContentLoaded", function () {  
 
-    const fetchWeather = async (location) => {
+    const apiKey = '143dbe2f90a8425b3cda5c24fb043a1b';  // Replace with your OpenWeather API Key
+
+    // Function to fetch latitude and longitude from city name
+    const getCoordinates = async (city) => {
         try {
-            temperatureDisplay.textContent = ""; // Clear previous content
+            const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
+            let response = await fetch(geoUrl);
+            let data = await response.json();
+            
+            if (!response.ok || data.length === 0) {
+                throw new Error("Invalid city name");
+            }
+            
+            return {
+                latitude: data[0].lat,
+                longitude: data[0].lon,
+                name: data[0].name
+            };
+        } catch (error) {
+            console.error("Error getting coordinates:", error);
+            alert("Invalid city name. Please try again.");
+            return null;
+        }
+    };
+
+    // Function to fetch weather data
+    const fetchWeather = async (city) => {
+        try {
+            // Get latitude and longitude first
+            const locationData = await getCoordinates(city);
+            if (!locationData) return;
+
+            const { latitude, longitude, name } = locationData;
+
+            // Clear previous content and show loading
+            temperatureDisplay.textContent = "";
             humidityDisplay.textContent = "";
             windSpeedDisplay.textContent = "";
             weatherDisplay.textContent = "";
-    
-            temperatureLoading.style.display = "block"; // Display loading indicators
+            temperatureLoading.style.display = "block";
             humidityLoading.style.display = "block";
             windSpeedLoading.style.display = "block";
             weatherLoading.style.display = "block";
-    
-            const apiKey = '143dbe2f90a8425b3cda5c24fb043a1b';  // Replace with your OpenWeather API Key
-            const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`;
-            let response = await fetch(url);
+
+            // Fetch weather data using One Call API
+            const weatherUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`;
+            let response = await fetch(weatherUrl);
             let data = await response.json();
-    
+
             if (!response.ok || data.error) {
-                throw new Error(data.error?.info || "City not found");
+                throw new Error(data.error?.message || "Weather data not found");
             }
-    
-            temperatureLoading.style.display = "none"; // Hide loading indicators
+
+            // Hide loading indicators
+            temperatureLoading.style.display = "none";
             humidityLoading.style.display = "none";
             windSpeedLoading.style.display = "none";
             weatherLoading.style.display = "none";
-    
-            temperatureDisplay.textContent = data.current.temperature + "°C";
+
+            // Update UI with new weather data
+            temperatureDisplay.textContent = data.current.temp + "°C";
             humidityDisplay.textContent = data.current.humidity + "%";
             windSpeedDisplay.textContent = data.current.wind_speed + " km/h";
-            weatherDisplay.textContent = `${data.current.weather_descriptions[0]} in ${data.location.name}`;
-            cityNameHeader.textContent = `Weather Dashboard for ${data.location.name}`;
-    
+            weatherDisplay.textContent = `${data.current.weather[0].description} in ${name}`;
+            cityNameHeader.textContent = `Weather Dashboard for ${name}`;
+
             // Update weather image
-            updateWeatherImage(data.current.weather_descriptions[0]);
+            updateWeatherImage(data.current.weather[0].main);
             console.log("Weather data fetched successfully:", data);
-    
+
         } catch (error) {
             console.error("Error fetching weather data:", error);
-            temperatureLoading.style.display = "none"; // Hide loading indicators
+            temperatureLoading.style.display = "none";
             humidityLoading.style.display = "none";
             windSpeedLoading.style.display = "none";
             weatherLoading.style.display = "none";
-    
+
             temperatureDisplay.textContent = "N/A";
             humidityDisplay.textContent = "N/A";
             windSpeedDisplay.textContent = "N/A";
             weatherDisplay.textContent = "N/A";
             cityNameHeader.textContent = `Weather Dashboard`;
-    
+
             alert("Failed to fetch weather data. Please enter a valid city name.");
         }
     };
-  
 
     // Function to update weather image based on weather condition
     const updateWeatherImage = (weatherCondition) => {
@@ -81,20 +114,13 @@ document.addEventListener("DOMContentLoaded", function () {
             "Smoke": "images/smoke.jpg",
             "Haze": "images/haze.jpg",
             "Dust": "images/dust.jpg",
-            
         };
- 
-        const imageUrl = imageMappings[weatherCondition];
-        if (imageUrl) {
-            weatherImage.src = imageUrl;
-        } else {
-            weatherImage.src = "images/sunny.jpg";
-        }
+
+        weatherImage.src = imageMappings[weatherCondition] || "images/sunny.jpg";
     };
 
     if (searchForm) {
-        // initially will display for london
-
+        // Initially display weather for London
         fetchWeather("London");
 
         searchForm.addEventListener("submit", function(event) {
