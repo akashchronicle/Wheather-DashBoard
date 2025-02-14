@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
             weatherLoading.style.display = "block";
     
             const apiKey = '7a5b10a6fa84a55e583efbbd651e63b4'; // Use your actual Weatherstack API key
-            const url = `http://api.weatherstack.com/current?access_key=${apiKey}&query=${location}&units=m`;
+            const url = `https://api.weatherstack.com/current?access_key=${apiKey}&query=${location}&units=m`;
             let response = await fetch(url);
             let data = await response.json();
     
