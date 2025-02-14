@@ -1,4 +1,4 @@
-// Getting all the elements
+// Get all the elements
 const searchInput = document.getElementById("search");
 const searchForm = document.getElementById("search-form");
 const temperatureDisplay = document.getElementById("temperature");
@@ -12,11 +12,11 @@ const weatherLoading = document.getElementById("weather-loading");
 const cityNameHeader = document.getElementById("city-name-header");
 const weatherImage = document.getElementById("weather-image");
 
-document.addEventListener("DOMContentLoaded", function () {  
+const apiKey = '143dbe2f90a8425b3cda5c24fb043a1b'; // Replace with your OpenWeather API Key
 
-    const apiKey = '143dbe2f90a8425b3cda5c24fb043a1b';  // Replace with your OpenWeather API Key
+document.addEventListener("DOMContentLoaded", function () {
 
-    // Function to fetch latitude and longitude from city name
+    // Function to get coordinates (latitude & longitude) from city name
     const getCoordinates = async (city) => {
         try {
             console.log(`Fetching coordinates for: ${city}`);
@@ -27,9 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Geocoding API Response:", data);
 
             if (!response.ok || data.length === 0) {
-                throw new Error("Invalid city name or API error");
+                throw new Error("Invalid city name or API issue");
             }
-            
+
             return {
                 latitude: data[0].lat,
                 longitude: data[0].lon,
@@ -42,18 +42,20 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // Function to fetch weather data
+    // Function to fetch weather data using latitude & longitude
     const fetchWeather = async (city) => {
         try {
-            // Get latitude and longitude first
             const locationData = await getCoordinates(city);
-            if (!locationData) return;
+            if (!locationData) {
+                console.error("Location data not found!");
+                return;
+            }
 
             const { latitude, longitude, name } = locationData;
 
             console.log(`Fetching weather data for ${name} (Lat: ${latitude}, Lon: ${longitude})`);
 
-            // Clear previous content and show loading
+            // Show loading indicators
             temperatureDisplay.textContent = "";
             humidityDisplay.textContent = "";
             windSpeedDisplay.textContent = "";
@@ -63,15 +65,14 @@ document.addEventListener("DOMContentLoaded", function () {
             windSpeedLoading.style.display = "block";
             weatherLoading.style.display = "block";
 
-            // Fetch weather data using One Call API
-            const weatherUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`;
+            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${apiKey}`;
             let response = await fetch(weatherUrl);
             let data = await response.json();
 
             console.log("Weather API Response:", data);
 
-            if (!response.ok || data.error) {
-                throw new Error(data.error?.message || "Weather data not found");
+            if (!response.ok || !data) {
+                throw new Error(data.message || "Weather data not found");
             }
 
             // Hide loading indicators
@@ -80,31 +81,19 @@ document.addEventListener("DOMContentLoaded", function () {
             windSpeedLoading.style.display = "none";
             weatherLoading.style.display = "none";
 
-            // Update UI with new weather data
-            temperatureDisplay.textContent = data.current.temp + "°C";
-            humidityDisplay.textContent = data.current.humidity + "%";
-            windSpeedDisplay.textContent = data.current.wind_speed + " km/h";
-            weatherDisplay.textContent = `${data.current.weather[0].description} in ${name}`;
+            // Update UI with weather data
+            temperatureDisplay.textContent = data.main.temp + "°C";
+            humidityDisplay.textContent = data.main.humidity + "%";
+            windSpeedDisplay.textContent = data.wind.speed + " km/h";
+            weatherDisplay.textContent = `${data.weather[0].description} in ${name}`;
             cityNameHeader.textContent = `Weather Dashboard for ${name}`;
 
             // Update weather image
-            updateWeatherImage(data.current.weather[0].main);
-            console.log("Weather data fetched successfully!");
+            updateWeatherImage(data.weather[0].main);
 
         } catch (error) {
             console.error("Error fetching weather data:", error);
-            temperatureLoading.style.display = "none";
-            humidityLoading.style.display = "none";
-            windSpeedLoading.style.display = "none";
-            weatherLoading.style.display = "none";
-
-            temperatureDisplay.textContent = "N/A";
-            humidityDisplay.textContent = "N/A";
-            windSpeedDisplay.textContent = "N/A";
-            weatherDisplay.textContent = "N/A";
-            cityNameHeader.textContent = `Weather Dashboard`;
-
-            alert("Failed to fetch weather data. Please enter a valid city name.");
+            alert("Could not fetch weather data. Please try again.");
         }
     };
 
@@ -116,28 +105,28 @@ document.addEventListener("DOMContentLoaded", function () {
             "Rain": "images/rain.jpg",
             "Drizzle": "images/rain.jpg",
             "Thunderstorm": "images/thunder.jpg",
-            "Mist": "images/fog(2).jpg",
-            "Fog": "images/fog(2).jpg",
+            "Mist": "images/fog.jpg",
+            "Fog": "images/fog.jpg",
             "Smoke": "images/smoke.jpg",
             "Haze": "images/haze.jpg",
-            "Dust": "images/dust.jpg",
+            "Dust": "images/dust.jpg"
         };
 
-        weatherImage.src = imageMappings[weatherCondition] || "images/sunny.jpg";
+        const imageUrl = imageMappings[weatherCondition] || "images/default.jpg";
+        weatherImage.src = imageUrl;
     };
 
     if (searchForm) {
-        console.log("Initializing default weather for London...");
+        // Initially display weather for London
         fetchWeather("London");
 
-        searchForm.addEventListener("submit", function(event) {
+        searchForm.addEventListener("submit", function (event) {
             event.preventDefault();
             const location = searchInput.value.trim();
             if (!location) {
                 alert("Please enter a city name.");
                 return;
             }
-            console.log(`User searched for: ${location}`);
             fetchWeather(location);
         });
     } else {
