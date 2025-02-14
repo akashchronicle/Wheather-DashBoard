@@ -19,12 +19,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Function to fetch latitude and longitude from city name
     const getCoordinates = async (city) => {
         try {
+            console.log(`Fetching coordinates for: ${city}`);
             const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
             let response = await fetch(geoUrl);
             let data = await response.json();
             
+            console.log("Geocoding API Response:", data);
+
             if (!response.ok || data.length === 0) {
-                throw new Error("Invalid city name");
+                throw new Error("Invalid city name or API error");
             }
             
             return {
@@ -48,6 +51,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const { latitude, longitude, name } = locationData;
 
+            console.log(`Fetching weather data for ${name} (Lat: ${latitude}, Lon: ${longitude})`);
+
             // Clear previous content and show loading
             temperatureDisplay.textContent = "";
             humidityDisplay.textContent = "";
@@ -62,6 +67,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const weatherUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`;
             let response = await fetch(weatherUrl);
             let data = await response.json();
+
+            console.log("Weather API Response:", data);
 
             if (!response.ok || data.error) {
                 throw new Error(data.error?.message || "Weather data not found");
@@ -82,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Update weather image
             updateWeatherImage(data.current.weather[0].main);
-            console.log("Weather data fetched successfully:", data);
+            console.log("Weather data fetched successfully!");
 
         } catch (error) {
             console.error("Error fetching weather data:", error);
@@ -120,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     if (searchForm) {
-        // Initially display weather for London
+        console.log("Initializing default weather for London...");
         fetchWeather("London");
 
         searchForm.addEventListener("submit", function(event) {
@@ -130,6 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Please enter a city name.");
                 return;
             }
+            console.log(`User searched for: ${location}`);
             fetchWeather(location);
         });
     } else {
